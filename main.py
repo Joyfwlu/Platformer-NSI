@@ -1,4 +1,4 @@
-import pyxel
+import pyxel as py
 
 class Player:
     def __init__(self, x=16, y=112):
