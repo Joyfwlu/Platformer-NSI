@@ -10,6 +10,75 @@ import pyxel
 
 #a = Maps(0)
 #b = Scene(0)
+
+#ALIIII, CA VAAAA ? les ennemis peuvent donc bouger vers le joueur, le tirer dessus. mais ensuite jsp où les faires spawn du coup ils apparaissent toutes les 4 sec à 10 bloc du joueur. JSP qu'elle autre modif on peut faire. et pour le spawn des ennemis, on utilise la meme texture ?  
+
+class Enemy:
+    def __init__(self, player_x, player_y, player_dir,player_health):
+        self.x = player_x + (10 * player_dir)  # Spawn à 10 pixels devant le joueur
+        self.y = player_y
+        self.speed = 2 
+        self.dir = -player_dir
+        self.is_alive = True
+        self.last_shot_time = 0
+        self.bullets = []
+
+    def update(self, player_x, player_y):
+        if self.x < player_x:
+            self.x += self.speed  
+        elif self.x > player_x:
+            self.x -= self.speed  
+
+        if self.y < player_y:
+            self.y += self.speed 
+        elif self.y > player_y:
+            self.y -= self.speed
+
+
+        if abs(self.x - player_x) < 8 and abs(self.y - player_y) < 8:
+            self.is_alive = False
+            player_health -= 1
+
+        if pyxel.frame_count - self.last_shot_time >= 120:
+            self.shoot(player_x, player_y)
+            self.last_shot_time = pyxel.frame_count
+            
+        for bullet in self.bullets:
+            bullet.update()
+            if abs(bullet.x - player.x) < 4 and abs(bullet.y - player.y) < 4:
+                player.health -= 1
+                bullet.is_alive = False  
+                
+        self.bullets = [bullet for bullet in self.bullets if bullet.is_alive]
+        
+    def shoot(self):
+        self.bullets.append(Bullet(self.x, self.y + 4, 2, self.dir))  
+
+    def draw(self):
+        pyxel.blt(self.x, self.y,0, 24,24,8,1)
+        
+
+class Enemysettings:
+    def __init__(self):
+        self.enemies = []
+        self.last_spawn_time = 0
+
+    def update(self, player_x, player_y, player_dir,player_health):
+        if pyxel.frame_count - self.last_spawn_time >= 240:  # Spawn toutes les 4 sec
+            self.enemies.append(Enemy(player_x, player_y, player_dir))
+            self.last_spawn_time = pyxel.frame_count
+
+        for enemy in self.enemies:
+            enemy.update(player_x, player_y)
+
+        # Supprime les ennemis morts (qui ont touché le joueur)
+        self.enemies = [enemy for enemy in self.enemies if enemy.is_alive]
+
+    def draw(self):
+        for enemy in self.enemies:
+            enemy.draw()
+
+            
 class Bullet:
     def __init__(self, x, y, speed, dir) :
         self.x = x
@@ -112,9 +181,11 @@ class App:
         pyxel.load("1.pyxres")
         self.Neoxis = Player()
         pyxel.run(self.update, self.draw)
+        self.enemy_manager = Enemysettings()
 
     def update(self):
         self.Neoxis.update()
+        self.enemy_manager.update(self.Neoxis.x, self.Neoxis.y, self.Neoxis.dir)
 
     def draw(self):
         pyxel.cls(0)
